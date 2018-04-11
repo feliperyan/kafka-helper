@@ -43,14 +43,18 @@ def get_kafka_ssl_context():
     with NamedTemporaryFile(suffix='.crt') as cert_file, \
          NamedTemporaryFile(suffix='.key') as key_file, \
          NamedTemporaryFile(suffix='.crt') as trust_file:
-        cert_file.write(os.environ['KAFKA_CLIENT_CERT'].encode('utf-8'))
+        
+        # cert_file.write(os.environ['KAFKA_CLIENT_CERT'].encode('utf-8'))
+        cert_file.write(os.environ['HEROKU_KAFKA_OLIVE_CLIENT_CERT'].encode('utf-8'))
+        
         cert_file.flush()
 
         # setup cryptography to password encrypt/protect the client key so it's not in the clear on
         # the filesystem.  Use the generated password in the call to load_cert_chain
         passwd = standard_b64encode(os.urandom(33))
         private_key = serialization.load_pem_private_key(
-            os.environ['KAFKA_CLIENT_CERT_KEY'].encode('utf-8'),
+            # os.environ['KAFKA_CLIENT_CERT_KEY'].encode('utf-8'),
+            os.environ['HEROKU_KAFKA_OLIVE_CLIENT_CERT_KEY'].encode('utf-8'),
             password=None,
             backend=default_backend()
         )
@@ -62,7 +66,9 @@ def get_kafka_ssl_context():
         key_file.write(pem)
         key_file.flush()
 
-        trust_file.write(os.environ['KAFKA_TRUSTED_CERT'].encode('utf-8'))
+        #trust_file.write(os.environ['KAFKA_TRUSTED_CERT'].encode('utf-8'))
+        trust_file.write(os.environ['HEROKU_KAFKA_OLIVE_TRUSTED_CERT'].encode('utf-8'))
+        
         trust_file.flush()
 
         # create an SSLContext for passing into the kafka provider using the create_default_context
@@ -88,11 +94,14 @@ def get_kafka_brokers():
     """
     # NOTE: The Kafka environment variables need to be present. If using
     # Apache Kafka on Heroku, they will be available in your app configuration.
-    if not os.environ.get('KAFKA_URL'):
-        raise RuntimeError('The KAFKA_URL config variable is not set.')
+    # if not os.environ.get('KAFKA_URL'):
+    if not os.environ.get('HEROKU_KAFKA_OLIVE_URL'):
+        raise RuntimeError('The HEROKU_KAFKA_OLIVE_URL config variable is not set.')
 
+    # return ['{}:{}'.format(parsedUrl.hostname, parsedUrl.port) for parsedUrl in
+            # [urlparse(url) for url in os.environ.get('KAFKA_URL').split(',')]]
     return ['{}:{}'.format(parsedUrl.hostname, parsedUrl.port) for parsedUrl in
-            [urlparse(url) for url in os.environ.get('KAFKA_URL').split(',')]]
+            [urlparse(url) for url in os.environ.get('HEROKU_KAFKA_OLIVE_URL').split(',')]]
 
 
 def get_kafka_producer(acks='all',
