@@ -8,7 +8,7 @@ import ssl
 from tempfile import NamedTemporaryFile
 try:
     from urlparse import urlparse
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     from urllib.parse import urlparse
 
 from base64 import standard_b64encode
